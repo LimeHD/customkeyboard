@@ -36,12 +36,12 @@ Keyboard keyboard = new Keyboard.Builder(Activity activity, Keyboard.KeyListener
 ### 2. Показ клавиатуры
 
 ``` git
-	keyboard.showKeyboard();
+keyboard.showKeyboard();
 ```
 ### 3. Скрытие клавиатуры
 
 ``` git
-	keyboard.hideKeyboard();
+keyboard.hideKeyboard();
 ```
 
 

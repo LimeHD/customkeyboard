@@ -28,7 +28,7 @@ dependencies {
 ### 1. Инициализация клавиатуры
 
 ``` git
-Keyboard keyboard = new Keyboard.Builder(Activity activity, Keyboard.KeyListener(), FrameLayout frameLayout)
+Keyboard keyboard = new Keyboard.Builder(Activity activity, Keyboard.KeyListener listener, FrameLayout frameLayout)
 	.enableNumberLine(boolean b) // Включение цифрового ряда
 	.setNightMode(boolean b) // Установка тёмной темы
 	.build();

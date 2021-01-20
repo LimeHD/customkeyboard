@@ -8,6 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 import androidx.annotation.Nullable;
@@ -57,7 +58,7 @@ public class MainActivity extends AppCompatActivity implements Keyboard.KeyListe
     }
 
     private void initKeyboard() {
-        LinearLayout keyboardView = findViewById(R.id.keyboard_view);
+        FrameLayout keyboardView = findViewById(R.id.keyboard_view);
         keyboard = new Keyboard.Builder(this, this, keyboardView)
             .enableNumberLine(false)
             .setNightMode(true)
@@ -118,8 +119,9 @@ public class MainActivity extends AppCompatActivity implements Keyboard.KeyListe
             View v = findViewAtPosition(getWindow().getDecorView().getRootView(), (int) ev.getRawX(), (int) ev.getRawY());
             Log.e("MainActivity.java", String.valueOf(v));
             Log.e("MainActivity.java", "end.");
-            if (v instanceof EditText || v instanceof AppCompatImageButton || v instanceof AppCompatImageView || v != null && v.getId() == Keyboard.getButtonsId() || v == null) {
-                return super.dispatchTouchEvent(ev);
+
+            if (!(v instanceof EditText) && !(v instanceof AppCompatImageButton) && !(v instanceof AppCompatImageView) && !keyboard.isKeyboardView(v) && isKeyboardActive) {
+                hideKeyboard();
             }
         }
         return super.dispatchTouchEvent(ev);

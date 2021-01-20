@@ -20,6 +20,9 @@ import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
+
+import androidx.annotation.NonNull;
+
 import java.util.ArrayList;
 
 public class Keyboard extends LinearLayout {
@@ -30,9 +33,15 @@ public class Keyboard extends LinearLayout {
     private WindowManager windowManager;
     private KeyListener callback;
     private ViewGroup viewGroup;
-    private boolean isFocused = false;
 
     private boolean isKeyboardActive = false;
+
+    private static final int SYMBOL_BUTTON = 0;
+    private static final int LANGUAGE_BUTTON = 1;
+    private static final int SPACE_BUTTON = 3;
+    private static final int CLEAR_BUTTON = 4;
+    private static final int HIDE_BUTTON = 5;
+    private static final int SEARCH_BUTTON = 6;
 
     private final String[][] keyboard = new String[][] {
             {"1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "(", ")"},
@@ -44,8 +53,7 @@ public class Keyboard extends LinearLayout {
             {"Z", "X", "C", "V", "B", "N", "M", "<", ">"}
     };
 
-    private Button firstKey, changeLanguage;
-    private LinearLayout linearLayout;
+    private Button firstKey;
 
     // Параметры для установки размеров клавиатура
     private final int param = 12; // Ряд кнопок = 1/12 от высота экрана => клавиатура из 4х рядов занимает 1/3 экрана по высоте
@@ -60,35 +68,16 @@ public class Keyboard extends LinearLayout {
     private boolean numberLineEnabled;
     private boolean nightThemeEnabled;
     private boolean isRussian = true;
-    private int orientation = 4;
-    private Window window;
-    private View lastFocusedView;
-    private boolean focus;
     private Context context;
-    int counter = 0;
 
-    public Keyboard(Context context, WindowManager windowManager, KeyListener callback, ViewGroup viewGroup, Window window) {
+
+    private Keyboard(Context context, WindowManager windowManager, KeyListener callback, ViewGroup viewGroup) {
         super(context);
         this.callback = callback;
         this.viewGroup = viewGroup;
         this.windowManager = windowManager;
-        this.window = window;
         this.context = context;
         this.viewGroup = viewGroup;
-        OrientationEventListener orientationListener = new OrientationEventListener(context, SensorManager.SENSOR_DELAY_NORMAL) {
-            @Override
-            public void onOrientationChanged(int i) {
-                int rotate = windowManager.getDefaultDisplay().getRotation();
-                if (rotate != orientation) {
-                    orientation = rotate;
-                    if (isKeyboardActive) {
-                        hideKeyboard();
-                        showKeyboard();
-                    }
-                }
-            }
-        };
-        orientationListener.enable();
     }
 
     public void showKeyboard() {
@@ -101,9 +90,7 @@ public class Keyboard extends LinearLayout {
         dpWidth = (int) Math.floor(width / param) - margin * 2;
         FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         params.gravity = Gravity.BOTTOM;
-
         dpHeight = width > height ? (Math.round(height / param) - margin * 2) : Math.round(dpWidth * sizeRation) - margin * 2;
-        //Log.e(TAG, "dpHeight: " + dpHeight);
 
         LayoutInflater inflater = LayoutInflater.from(getContext());
         int resId = numberLineEnabled ? R.layout.keyboard_view_nums : R.layout.keyboard_view;
@@ -115,9 +102,7 @@ public class Keyboard extends LinearLayout {
 
         KeyboardView keyboardView1 = new KeyboardView(context);
         viewGroup.addView(keyboardView1);
-        //Log.e(TAG, "keyboardView height: " + keyboardView.getHeight());
         keyboardView1.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, getKeyboardHeight()));
-
 
         ArrayList<String[]> array = new ArrayList<>();
         array.add(keyboard[0]);
@@ -134,24 +119,13 @@ public class Keyboard extends LinearLayout {
         isKeyboardActive = true;
     }
 
-    @Override
-    public boolean onInterceptTouchEvent(MotionEvent ev) {
-        return true;
-    }
-
-    public void clearFocusFromKey() {
-        if (focus) {
-            callback.onKeyboardHideClicked();
-        }
-    }
-
     public void setNightThemeEnabled(boolean nightThemeEnabled) {
         this.nightThemeEnabled = nightThemeEnabled;
     }
 
     public boolean isKeyboardView(View view) {
         try {
-            if (view instanceof KeyboardView || view.getId() == R.id.button_1) {
+            if (view instanceof KeyboardView || view.getId() == R.id.keyboard_view) {
                 return true;
             }
         } catch (Exception ex) {
@@ -161,154 +135,142 @@ public class Keyboard extends LinearLayout {
     }
 
     private void addKeys(ArrayList<String[]> keyLines) {
+        // Полотно для клавиатуры
         LayoutInflater inflater = LayoutInflater.from(getContext());
-        LinearLayout host = keyboardView.findViewById(R.id.button_1);
+        LinearLayout host = keyboardView.findViewById(R.id.keyboard_view);
         if (nightThemeEnabled) {
             host.setBackgroundColor(getResources().getColor(R.color.black));
         }
+
         LinearLayout linearLayout;
         int startIndex = numberLineEnabled ? 0 : 1;
+        int thirdLineLength = isRussian ? keyboard[3].length : keyboard[6].length;
         for (int i = startIndex; i < keyLines.size(); i++) {
             String[] array = keyLines.get(i);
             int pos = numberLineEnabled ? i : i - 1;
             linearLayout = keyboardView.findViewById(getLinearLayoutId(pos));
 
-            if (isRussian && array.length == keyboard[3].length || !isRussian && array.length == keyboard[6].length) {
+            if (array.length == thirdLineLength) { //
                 View v = inflater.inflate(R.layout.keyboard_item, linearLayout, true);
-                Button button = v.findViewById(R.id.key_button);
-                //button.setFocusableInTouchMode(true);
-                //button.setFocusable(true);
-                changeLanguage = button;
-                setLangunageButtonSize(button);
+                Button languageButton = v.findViewById(R.id.key_button);
+                setupButton(languageButton, LANGUAGE_BUTTON,null);
+            }
+
+            for (int j = 0; j < array.length; j++) {
+                View v = inflater.inflate(R.layout.keyboard_item, linearLayout, true);
+                Button b = v.findViewById(R.id.key_button);
+                Button symbolButton = setupButton(b, SYMBOL_BUTTON, array[j]);
+                if (i == startIndex && j == 0) {
+                    firstKey = symbolButton;
+                }
+            }
+
+            if (array.length == thirdLineLength) { // Добавление кнопки <-
+                View v = inflater.inflate(R.layout.keyboard_clear, linearLayout, true);
+                ImageButton clearButton = v.findViewById(R.id.key_button);
+                setupButton(clearButton, CLEAR_BUTTON);
+            }
+        }
+        // Заполнение нижнего ряда клавиатуры
+        linearLayout = keyboardView.findViewById(getLinearLayoutId(numberLineEnabled ? keyLines.size() : keyLines.size() - 1));
+
+        // Кнопка для скрытия клавиатуры
+        View v = inflater.inflate(R.layout.keyboard_hide, linearLayout, true);
+        ImageButton hideButton = v.findViewById(R.id.key_button);
+        setupButton(hideButton, HIDE_BUTTON);
+
+        // Добавление пробела
+        v = inflater.inflate(R.layout.keyboard_space, linearLayout, true);
+        Button spaceButton = v.findViewById(R.id.key_button);
+        setupButton(spaceButton, SPACE_BUTTON, null);
+
+        // Лупа
+        v = inflater.inflate(R.layout.keyboard_search, linearLayout, true);
+        ImageButton searchButton = v.findViewById(R.id.key_button);
+        setupButton(searchButton, SEARCH_BUTTON);
+    }
+
+    private Button setupButton(Button button, int type, String symbol) {
+        switch (type) {
+            case SYMBOL_BUTTON:
+                button.setOnClickListener(v1 -> {
+                    callback.onKeyClicked(symbol);
+                });
+                button.setText(symbol);
+                setButtonSize(button, SYMBOL_BUTTON);
+            break;
+            case LANGUAGE_BUTTON:
+                setButtonSize(button, LANGUAGE_BUTTON);
                 if (isRussian) {
                     button.setText(R.string.ru_title);
                 } else {
                     button.setText(R.string.eng_title);
                 }
                 button.setBackground(getResources().getDrawable(R.drawable.action_button_style));
-                button.setOnClickListener(v1 -> { // Смена языка
-                    //setFocusOnBoard();
-                    boolean focused = changeLanguage.isFocused();
+                button.setOnClickListener(click -> { // Смена языка
+                    boolean focused = button.isFocused();
                     isRussian = !isRussian;
                     hideKeyboard();
                     showKeyboard();
-                    if (focused) changeLanguage.requestFocusFromTouch();
+                    if (focused) button.requestFocusFromTouch();
                 }); // Смена языка
-                button.setId(R.id.button_1);
-                if (nightThemeEnabled) {
-                    button.setBackground(getResources().getDrawable(R.drawable.night_action_button_style));
-                    button.setTextColor(getResources().getColor(R.color.white));
-                } else {
-                    button.setBackground(getResources().getDrawable(R.drawable.action_button_style));
-                }
-            }
-
-            for (int j = 0; j < array.length; j++) {
-                View v = inflater.inflate(R.layout.keyboard_item, linearLayout, true);
-                Button b = v.findViewById(R.id.key_button);
-                b.setFocusable(true);
-                if (i == startIndex && j == 0) firstKey = b;
-                b.setText(array[j]);
-                b.setOnClickListener(v1 -> {
-                    callback.onKeyClicked(b.getText().toString());
+            break;
+            case SPACE_BUTTON:
+                button.setOnClickListener(click -> {
+                    callback.onKeyClicked(" ");
                 });
-                if (nightThemeEnabled) {
-                    b.setTextColor(getResources().getColor(R.color.white));
-                    b.setBackground(getResources().getDrawable(R.drawable.night_button_style));
-                }
-                setButtonSize(b);
-                b.setId(R.id.button_1);
-            }
+                setButtonSize(button, SPACE_BUTTON);
+            break;
+        }
+        updateButtonTheme(button);
+        button.setId(R.id.keyboard_view);
+        return button;
+    }
 
-            if (isRussian && array.length == keyboard[3].length || !isRussian && array.length == keyboard[6].length) {
-                View v = inflater.inflate(R.layout.keyboard_clear, linearLayout, true);
-                ImageButton button = v.findViewById(R.id.key_button);
-                setClearSize(button);
-                button.setBackgroundResource(R.drawable.action_button_style);
-                button.setOnClickListener(v1 -> {
+    private void setupButton(ImageButton button, int type) {
+        switch (type) {
+            case CLEAR_BUTTON:
+                button.setOnClickListener(click -> {
                     callback.onDeleteButtonClicked();
                 }); // Стереть 1 символ
-                button.setOnLongClickListener(v1 -> {
+                button.setOnLongClickListener(click -> {
                     callback.onLongDeleteButtonClicked();
                     return false;
                 });
-                button.setId(R.id.button_1);
-                if (nightThemeEnabled) {
-                    button.setBackground(getResources().getDrawable(R.drawable.night_action_button_style));
-                    button.setColorFilter(getResources().getColor(R.color.white));
-                } else {
-                    button.setBackground(getResources().getDrawable(R.drawable.action_button_style));
-                }
-            }
+            break;
+            case HIDE_BUTTON:
+                updateButtonTheme(button);
+                button.setOnClickListener(click -> {
+                    callback.onKeyboardHideClicked();
+                });
+            break;
+            case SEARCH_BUTTON:
+                button.setOnClickListener(click -> {
+                    callback.onKeyboardOkClicked();
+                });
+            break;
         }
-        linearLayout = keyboardView.findViewById(getLinearLayoutId(numberLineEnabled ? keyLines.size() : keyLines.size() - 1));
-        View v = inflater.inflate(R.layout.keyboard_hide, linearLayout, true);
-        ImageButton ib = v.findViewById(R.id.key_button);
-        if (nightThemeEnabled) {
-            ib.setBackground(getResources().getDrawable(R.drawable.night_action_button_style));
-            ib.setColorFilter(getResources().getColor(R.color.white));
-        } else {
-            ib.setBackground(getResources().getDrawable(R.drawable.action_button_style));
-        }
-        ib.setOnClickListener(v1 -> {
-            callback.onKeyboardHideClicked();
-        });
-        ib.setId(R.id.button_1);
-        setClearSize(ib);
-        // Добавление пробела
-        v = inflater.inflate(R.layout.keyboard_space, linearLayout, true);
-        Button b = v.findViewById(R.id.key_button);
-        b.setOnClickListener(v1 -> {
-            callback.onKeyClicked(" ");
-        });
-        setSpaceSize(b);
-        b.setId(R.id.button_1);
-        if (nightThemeEnabled) {
-            b.setBackground(getResources().getDrawable(R.drawable.night_action_button_style));
-        } else {
-            b.setBackground(getResources().getDrawable(R.drawable.action_button_style));
-        }
-        v = inflater.inflate(R.layout.keyboard_search, linearLayout, true);
-        ib = v.findViewById(R.id.key_button);
-        ib.setId(R.id.button_1);
-        //ib.setFocusableInTouchMode(true);
-        ib.setFocusable(true);
-        if (nightThemeEnabled) {
-            ib.setBackground(getResources().getDrawable(R.drawable.night_action_button_style));
-            ib.setColorFilter(getResources().getColor(R.color.white));
-        } else {
-            ib.setBackground(getResources().getDrawable(R.drawable.action_button_style));
-        }
-        ib.setOnClickListener(v1 -> {
-            callback.onKeyboardOkClicked();
-        });
-        setClearSize(ib);
+        setButtonSize(button);
+        button.setId(R.id.keyboard_view);
+        updateButtonTheme(button);
     }
 
-    public static int getButtonsId() {
-        return R.id.button_1;
+    private void updateButtonTheme(Button button) {
+        if (nightThemeEnabled) {
+            button.setBackground(getResources().getDrawable(R.drawable.night_action_button_style));
+            button.setTextColor(getResources().getColor(R.color.white));
+        }
     }
 
-    public void setFocusOnFirstKey() {
+    private void updateButtonTheme(ImageButton imageButton) {
+        if (nightThemeEnabled) {
+            imageButton.setBackground(getResources().getDrawable(R.drawable.night_action_button_style));
+            imageButton.setColorFilter(getResources().getColor(R.color.white));
+        }
+    }
+
+    public void setFocusInTouchMode() { // Фокусировка на первую кнопку в клавиатуре
         firstKey.requestFocusFromTouch();
-        isFocused = true;
-    }
-
-    @Override
-    public boolean dispatchTouchEvent(MotionEvent ev) {
-        if (ev.getAction() == MotionEvent.ACTION_DOWN) {
-            View v = window.getCurrentFocus();
-            if (v.getId() != R.id.button_1) {
-                v.clearFocus();
-                callback.onKeyboardHideClicked();
-            }
-        }
-        return super.dispatchTouchEvent(ev);
-    }
-
-    public void setFocusOnBoard() {
-        keyboardView.requestFocus();
-        keyboardView.requestFocusFromTouch();
     }
 
     public int getKeyboardHeight() {
@@ -318,18 +280,7 @@ public class Keyboard extends LinearLayout {
         return d * lines;
     }
 
-    private void setLangunageButtonSize(Button button) {
-        LayoutParams params = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
-        params.height = dpHeight ;
-        params.width = (int) Math.round(dpWidth * 1.5);
-        params.leftMargin = margin;
-        params.rightMargin = margin;
-        params.bottomMargin = margin;
-        params.topMargin = margin;
-        button.setLayoutParams(params);
-    }
-
-    public int getLinearLayoutId(int index) {
+    private int getLinearLayoutId(int index) {
         switch (index) {
             case 0: return R.id.firstLine;
             case 1: return R.id.secondLine;
@@ -340,22 +291,19 @@ public class Keyboard extends LinearLayout {
         }
     }
 
-    private void setButtonSize(Button button) {
+    private void setButtonSize(Button button, int type) {
         LayoutParams params = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
         params.height = dpHeight;
-        params.width = dpWidth;
-        params.leftMargin = margin;
-        params.rightMargin = margin;
-        params.bottomMargin = margin;
-        params.topMargin = margin;
-        button.setLayoutParams(params);
-        //Log.e(TAG, "dpHeight: " + dpHeight + " font size: " + button.getTextSize());
-    }
-
-    private void setSpaceSize(Button button) {
-        LayoutParams params = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
-        params.height = dpHeight ;
-        params.width = dpWidth * spaceSize;
+        int width = dpWidth;
+        switch (type) {
+            case LANGUAGE_BUTTON:
+                width = (int) Math.round(dpWidth * 1.5);
+            break;
+            case SPACE_BUTTON:
+                width *= spaceSize;
+            break;
+        }
+        params.width = width;
         params.leftMargin = margin;
         params.rightMargin = margin;
         params.bottomMargin = margin;
@@ -363,7 +311,7 @@ public class Keyboard extends LinearLayout {
         button.setLayoutParams(params);
     }
 
-    private void setClearSize(ImageButton button) {
+    private void setButtonSize(ImageButton button) {
         LayoutParams params = new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
         params.height = dpHeight ;
         params.width = (int) Math.round(dpWidth * 1.5);
@@ -405,19 +353,15 @@ public class Keyboard extends LinearLayout {
         private WindowManager windowManager;
         private KeyListener callback;
         private ViewGroup viewGroup;
-        private Window window;
-        private Activity activity;
+
         private boolean nightMode = false;
         private boolean numberLine = false;
 
-        public Builder(Activity activity, KeyListener callback, ViewGroup viewGroup) {
+        public Builder(@NonNull Activity activity, @NonNull KeyListener callback, @NonNull ViewGroup viewGroup) {
             this.context = activity.getApplicationContext();
             this.windowManager = activity.getWindowManager();
             this.callback = callback;
             this.viewGroup = viewGroup;
-            this.viewGroup = viewGroup;
-            this.window = activity.getWindow();
-            this.activity = activity;
         }
 
         public Builder setNightMode(boolean status) {
@@ -431,7 +375,7 @@ public class Keyboard extends LinearLayout {
         }
 
         public Keyboard build() {
-            Keyboard keyboard = new Keyboard(context, windowManager, callback, viewGroup, window);
+            Keyboard keyboard = new Keyboard(context, windowManager, callback, viewGroup);
             keyboard.setNightMode(nightMode);
             keyboard.setNumberLine(numberLine);
             return keyboard;

@@ -61,7 +61,7 @@ public class MainActivity extends AppCompatActivity implements Keyboard.KeyListe
         FrameLayout keyboardView = findViewById(R.id.keyboard_view);
         keyboard = new Keyboard.Builder(this, this, keyboardView)
             .enableNumberLine(false)
-            .setNightMode(true)
+            .setNightMode(false)
             .build();
     }
 

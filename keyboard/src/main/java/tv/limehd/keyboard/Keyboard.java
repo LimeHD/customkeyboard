@@ -206,7 +206,6 @@ public class Keyboard extends LinearLayout {
                 } else {
                     button.setText(R.string.eng_title);
                 }
-                button.setBackground(getResources().getDrawable(R.drawable.action_button_style));
                 button.setOnClickListener(click -> { // Смена языка
                     boolean focused = button.isFocused();
                     isRussian = !isRussian;
@@ -357,11 +356,11 @@ public class Keyboard extends LinearLayout {
         private boolean nightMode = false;
         private boolean numberLine = false;
 
-        public Builder(@NonNull Activity activity, @NonNull KeyListener callback, @NonNull ViewGroup viewGroup) {
+        public Builder(@NonNull Activity activity, @NonNull KeyListener callback, @NonNull FrameLayout frameLayout) {
             this.context = activity.getApplicationContext();
             this.windowManager = activity.getWindowManager();
             this.callback = callback;
-            this.viewGroup = viewGroup;
+            this.viewGroup = frameLayout;
         }
 
         public Builder setNightMode(boolean status) {

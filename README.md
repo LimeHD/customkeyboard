@@ -19,6 +19,6 @@ allprojects {
 
 ``` git
 dependencies {
-	implementation 'com.github.LimeHD:customkeyboard:Tag'
+	implementation 'com.github.LimeHD:customkeyboard:53c5f3031c'
 }
 ```

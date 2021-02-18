@@ -506,15 +506,16 @@ public class Keyboard extends LinearLayout {
 
     public View findViewAtPosition(View parent, int x, int y) {
         if (parent instanceof ViewGroup) {
+            View lastView = null;
             ViewGroup viewGroup = (ViewGroup)parent;
             for (int i = 0; i < viewGroup.getChildCount(); i++) {
                 View child = viewGroup.getChildAt(i);
                 View viewAtPosition = findViewAtPosition(child, x, y);
                 if (viewAtPosition != null) {
-                    return viewAtPosition;
+                    lastView = viewAtPosition;
                 }
             }
-            return null;
+            return lastView;
         } else {
             Rect rect = new Rect();
             parent.getGlobalVisibleRect(rect);

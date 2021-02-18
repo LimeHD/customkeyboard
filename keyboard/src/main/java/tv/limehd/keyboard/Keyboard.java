@@ -476,6 +476,7 @@ public class Keyboard extends LinearLayout {
     }
 
     public void hideKeyboard() {
+        keyboardActive = false;
         buttonsRows = new ArrayList<>();
         currentPosition = -1; currentRow = -1;
         keyboardActive = false;

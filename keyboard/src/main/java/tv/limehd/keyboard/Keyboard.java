@@ -3,6 +3,7 @@ package tv.limehd.keyboard;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Point;
+import android.graphics.Rect;
 import android.hardware.SensorManager;
 import android.os.Handler;
 import android.util.Log;
@@ -501,6 +502,28 @@ public class Keyboard extends LinearLayout {
 
     private void setNumberLine(boolean status) {
         numberLineEnabled = status;
+    }
+
+    public View findViewAtPosition(View parent, int x, int y) {
+        if (parent instanceof ViewGroup) {
+            ViewGroup viewGroup = (ViewGroup)parent;
+            for (int i = 0; i < viewGroup.getChildCount(); i++) {
+                View child = viewGroup.getChildAt(i);
+                View viewAtPosition = findViewAtPosition(child, x, y);
+                if (viewAtPosition != null) {
+                    return viewAtPosition;
+                }
+            }
+            return null;
+        } else {
+            Rect rect = new Rect();
+            parent.getGlobalVisibleRect(rect);
+            if (rect.contains(x, y)) {
+                return parent;
+            } else {
+                return null;
+            }
+        }
     }
 
     public static class Builder {

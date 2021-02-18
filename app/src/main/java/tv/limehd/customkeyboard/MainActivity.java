@@ -3,30 +3,33 @@ package tv.limehd.customkeyboard;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
-import android.widget.LinearLayout;
 import android.widget.Toast;
+
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.appcompat.widget.AppCompatImageView;
 
 import tv.limehd.keyboard.Keyboard;
+
 import static android.view.View.INVISIBLE;
 import static android.view.View.VISIBLE;
 
 public class MainActivity extends AppCompatActivity implements Keyboard.KeyListener {
 
+    static { AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO); }
+
     private EditText editText;
-    private Button hideKeyboardButton;
 
     private Keyboard keyboard;
-    private boolean isKeyboardActive = false;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -40,22 +43,12 @@ public class MainActivity extends AppCompatActivity implements Keyboard.KeyListe
         editText = findViewById(R.id.edit_text);
         editText.setFocusableInTouchMode(false);
         editText.setOnClickListener(click -> {
-            if (!isKeyboardActive) {
+            if (!keyboard.isKeyboardActive()) {
                 showKeyboard();
             }
         });
-
-        hideKeyboardButton = findViewById(R.id.hide_keyboard_button);
-        hideKeyboardButton.setOnClickListener(click -> {
-            hideKeyboard();
-        });
-        updateHideButton();
     }
 
-    private void updateHideButton() {
-        int visibility = isKeyboardActive ? VISIBLE : INVISIBLE;
-        hideKeyboardButton.setVisibility(visibility);
-    }
 
     private void initKeyboard() {
         FrameLayout keyboardView = findViewById(R.id.keyboard_view);
@@ -67,14 +60,23 @@ public class MainActivity extends AppCompatActivity implements Keyboard.KeyListe
 
     private void showKeyboard() {
         keyboard.showKeyboard();
-        isKeyboardActive = true;
-        updateHideButton();
     }
 
     private void hideKeyboard() {
         keyboard.hideKeyboard();
-        isKeyboardActive = false;
-        updateHideButton();
+        Log.d("MainActivity", "hide keyboard!");
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+            View v = getCurrentFocus();
+            if (v.getId() != R.id.keyboard_view) {
+                v.clearFocus();
+            }
+            keyboard.focusNavigation(event);
+            Log.d("MainActivity", "current focus: " + getCurrentFocus());
+
+        return true;
     }
 
     @Override
@@ -106,21 +108,14 @@ public class MainActivity extends AppCompatActivity implements Keyboard.KeyListe
     }
 
     @Override
-    public boolean onTouchEvent(MotionEvent event) {
-        if (event.getAction() == MotionEvent.ACTION_DOWN) hideKeyboard();
-        return false;
-    }
-
-    @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
-        if (ev.getAction() == MotionEvent.ACTION_DOWN)
-        {
+        if (ev.getAction() == MotionEvent.ACTION_DOWN) {
             Log.e("MainActivity.java", "Starting search..");
             View v = findViewAtPosition(getWindow().getDecorView().getRootView(), (int) ev.getRawX(), (int) ev.getRawY());
             Log.e("MainActivity.java", String.valueOf(v));
             Log.e("MainActivity.java", "end.");
 
-            if (!(v instanceof EditText) && !(v instanceof AppCompatImageButton) && !(v instanceof AppCompatImageView) && !keyboard.isKeyboardView(v) && isKeyboardActive) {
+            if (!(v instanceof EditText) && !(v instanceof AppCompatImageButton) && !(v instanceof AppCompatImageView) && !keyboard.isKeyboardView(v) && keyboard.isKeyboardActive()) {
                 hideKeyboard();
             }
         }

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="space_title">Пробел</string>
-    <string name="eng_title">RU</string>
-    <string name="ru_title">EN</string>
+    <string name="eng_title">EN</string>
+    <string name="ru_title">RU</string>
 </resources>

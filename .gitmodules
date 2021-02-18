@@ -1,0 +1,3 @@
+[submodule "adnroid-iptv-module"]
+	path = adnroid-iptv-module
+	url = https://github.com/LimeHD/adnroid-iptv-module.git

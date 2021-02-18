@@ -1,5 +1,3 @@
-include ':m3utoolpro'
 include ':keyboard'
 include ':app'
-project(':m3utoolpro').projectDir = new File(rootDir, 'adnroid-iptv-module/m3utoolpro/')
 rootProject.name = "customkeyboard"

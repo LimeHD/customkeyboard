@@ -7,7 +7,6 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 import android.widget.Toast;
@@ -19,9 +18,6 @@ import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.appcompat.widget.AppCompatImageView;
 
 import tv.limehd.keyboard.Keyboard;
-
-import static android.view.View.INVISIBLE;
-import static android.view.View.VISIBLE;
 
 public class MainActivity extends AppCompatActivity implements Keyboard.KeyListener {
 
@@ -53,7 +49,7 @@ public class MainActivity extends AppCompatActivity implements Keyboard.KeyListe
     private void initKeyboard() {
         FrameLayout keyboardView = findViewById(R.id.keyboard_view);
         keyboard = new Keyboard.Builder(this, this, keyboardView)
-            .enableNumberLine(false)
+            .enableNumberLine(true)
             .setNightMode(false)
             .build();
     }

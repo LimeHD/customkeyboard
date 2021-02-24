@@ -1,5 +1,6 @@
 package tv.limehd.keyboard;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Point;
@@ -183,8 +184,6 @@ public class Keyboard extends LinearLayout {
                 buttonsRow.add(symbolButton);
                 if (i == startIndex && j == 0) {
                     firstKey = symbolButton;
-                    firstKey.setFocusable(true);
-                    firstKey.setFocusableInTouchMode(true);
                 }
             }
             buttonsRows.add(buttonsRow);

@@ -71,6 +71,8 @@ public class Keyboard extends LinearLayout {
 
     private Button firstKey;
 
+    private KeyboardView keyboardView1;
+
     // Параметры для установки размеров клавиатура
     private final int param = 12; // Ряд кнопок = 1/12 от высота экрана => клавиатура из 4х рядов занимает 1/3 экрана по высоте
     private final float sizeRation = 1.56F; // Высотка кнопки в портренной ориентации = ширине * sizeRation
@@ -123,7 +125,7 @@ public class Keyboard extends LinearLayout {
         keyboardView.setOnTouchListener((v, event) -> true);
         keyboardView.setLayoutParams(params);
 
-        KeyboardView keyboardView1 = new KeyboardView(context);
+        keyboardView1 = new KeyboardView(context);
         viewGroup.addView(keyboardView1);
         keyboardView1.setLayoutParams(new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, getKeyboardHeight()));
 
@@ -484,6 +486,7 @@ public class Keyboard extends LinearLayout {
         } else {
             Log.e(TAG, "Keyboard is null");
         }
+        viewGroup.removeView(keyboardView1);
     }
 
     public boolean isKeyboardActive() { return keyboardActive; }

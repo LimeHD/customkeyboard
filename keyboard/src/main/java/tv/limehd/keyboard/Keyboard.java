@@ -1,23 +1,16 @@
 package tv.limehd.keyboard;
 
-import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Point;
 import android.graphics.Rect;
-import android.hardware.SensorManager;
-import android.os.Handler;
 import android.util.Log;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
-import android.view.OrientationEventListener;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.ViewTreeObserver;
-import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.FrameLayout;
@@ -56,19 +49,6 @@ public class Keyboard extends LinearLayout {
             {"Z", "X", "C", "V", "B", "N", "M", "<", ">"}
     };
 
-    //TODO: добавить пересчёт отступа между кнопками при смене языка
-    /*private final String[][] keyboard = new String[][] {
-            {"1", "2", "3", "4", "5", "6", "7", "8", "9", "0"},
-            {"Й", "Ц", "У", "К", "Е", "Н", "Г", "Ш", "Щ", "З", "Х", "Ъ"},
-            {"Ф", "Ы", "В", "А", "П", "Р", "О", "Л", "Д", "Ж", "Э"},
-            {"Я", "Ч", "С", "М", "И", "Т", "Ь", "Б", "Ю"},
-            {"Q", "W", "E", "R", "T", "Y", "U", "I", "O", "P"},
-            {"A", "S", "D", "F", "G", "H", "J", "K", "L"},
-            {"Z", "X", "C", "V", "B", "N", "M"}
-    };*/
-
-    private Button[][] buttons;
-
     private Button firstKey;
 
     private KeyboardView keyboardView1;
@@ -92,7 +72,6 @@ public class Keyboard extends LinearLayout {
     private boolean keyboardActive = false;
     private boolean isLanguageButtonFocused = false;
 
-
     private Keyboard(Context context, WindowManager windowManager, KeyListener callback, ViewGroup viewGroup) {
         super(context);
         this.callback = callback;
@@ -100,9 +79,6 @@ public class Keyboard extends LinearLayout {
         this.windowManager = windowManager;
         this.context = context;
     }
-
-
-
 
     public void showKeyboard() {
         keyboardActive = true;
@@ -222,11 +198,6 @@ public class Keyboard extends LinearLayout {
         setupButton(searchButton, SEARCH_BUTTON);
 
         buttonsRows.add(buttonRow);
-
-        Log.d(TAG, "Получен список из " + buttonsRows.size() + " рядов");
-        for (int i = 0; i < buttonsRows.size(); i++) {
-            Log.d(TAG, "Длина [" + i + "] ряда: " + buttonsRows.get(i).size());
-        }
     }
 
     /*
@@ -263,15 +234,14 @@ public class Keyboard extends LinearLayout {
 
     // Возвращение boolean (false, если нужно скрыть клавиатуру)
     public void focusNavigation(KeyEvent event) {
-        Log.d(TAG, "event key code: " + event.getKeyCode());
+        if (isLanguageButtonFocused) { isLanguageButtonFocused = false;
+        }
         if (isKeyboardActive()) {
-            Log.d(TAG, "#1");
             if (currentRow < 0) {
                 currentRow = 0;
                 currentPosition = 0;
                 buttonsRows.get(currentRow).get(currentPosition).requestFocusFromTouch();
                 buttonsRows.get(currentRow).get(currentPosition).requestFocus();
-                Log.d(TAG, "#2: " + buttonsRows.get(currentRow).get(currentPosition));
                 return;
             }
             int rowLength = buttonsRows.get(currentRow).size();
@@ -308,13 +278,9 @@ public class Keyboard extends LinearLayout {
                 break;
 
                 case KeyEvent.KEYCODE_DPAD_DOWN:
-                    Log.d(TAG, "KEYCODE_DPAD_DOWN!");
                     newRow = currentRow + 1;
                     if (newRow < buttonsRows.size()) {
                         currentRow = newRow;
-
-
-
                         if (buttonsRows.get(currentRow).size() == 3 && currentPosition != 0 && currentPosition != buttonsRows.get(newRow - 1).size() - 1) {
                             currentPosition = 1;
                         } else if (buttonsRows.get(newRow).size() <= currentPosition) {
@@ -333,7 +299,6 @@ public class Keyboard extends LinearLayout {
                             currentPosition = buttonsRows.get(currentRow).size() - 1;
                         }
                         buttonsRows.get(currentRow).get(currentPosition).requestFocusFromTouch();
-
                     } else {
                         hideKeyboard();
                     }
@@ -366,7 +331,6 @@ public class Keyboard extends LinearLayout {
                 }); // Смена языка
                 if (isLanguageButtonFocused) {
                     button.requestFocusFromTouch();
-                    isLanguageButtonFocused = false;
                 }
             break;
             case SPACE_BUTTON:
@@ -479,7 +443,10 @@ public class Keyboard extends LinearLayout {
     public void hideKeyboard() {
         keyboardActive = false;
         buttonsRows = new ArrayList<>();
-        currentPosition = -1; currentRow = -1;
+        if (!isLanguageButtonFocused) {
+            currentPosition = -1;
+            currentRow = -1;
+        }
         keyboardActive = false;
         if (keyboardView != null) {
             viewGroup.removeView(keyboardView);

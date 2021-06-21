@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.Point;
 import android.graphics.Rect;
-import android.util.Log;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -448,12 +447,7 @@ public class Keyboard extends LinearLayout {
             currentRow = -1;
         }
         keyboardActive = false;
-        if (keyboardView != null) {
-            viewGroup.removeView(keyboardView);
-        } else {
-            Log.e(TAG, "Keyboard is null");
-        }
-        viewGroup.removeView(keyboardView1);
+        viewGroup.removeAllViews();
     }
 
     public boolean isKeyboardActive() { return keyboardActive; }

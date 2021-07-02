@@ -17,9 +17,10 @@ import androidx.appcompat.app.AppCompatDelegate;
 import androidx.appcompat.widget.AppCompatImageButton;
 import androidx.appcompat.widget.AppCompatImageView;
 
+import tv.limehd.keyboard.KeyListener;
 import tv.limehd.keyboard.Keyboard;
 
-public class MainActivity extends AppCompatActivity implements Keyboard.KeyListener {
+public class MainActivity extends AppCompatActivity implements KeyListener {
 
     static { AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO); }
 
@@ -101,6 +102,11 @@ public class MainActivity extends AppCompatActivity implements Keyboard.KeyListe
     @Override
     public void onKeyboardOkClicked() {
         Toast.makeText(this, "OnKeyboardOkClicked", Toast.LENGTH_SHORT).show();
+    }
+
+    @Override
+    public void onKeyboardHided() {
+
     }
 
     @Override

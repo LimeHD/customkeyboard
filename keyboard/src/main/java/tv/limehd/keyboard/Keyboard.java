@@ -448,17 +448,12 @@ public class Keyboard extends LinearLayout {
         }
         keyboardActive = false;
         viewGroup.removeAllViews();
+        if (callback != null) {
+            callback.onKeyboardHided();
+        }
     }
 
     public boolean isKeyboardActive() { return keyboardActive; }
-
-    public interface KeyListener {
-        void onKeyClicked(String key);
-        void onDeleteButtonClicked();
-        void onLongDeleteButtonClicked();
-        void onKeyboardHideClicked();
-        void onKeyboardOkClicked();
-    }
 
     private void setNightMode(boolean status) {
         nightThemeEnabled = status;

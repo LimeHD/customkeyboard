@@ -1,10 +1,12 @@
 package tv.limehd.keyboard;
 
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Handler;
+import android.util.Log;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -73,16 +75,16 @@ public class Keyboard extends LinearLayout {
     private boolean keyboardActive = false;
     private boolean isLanguageButtonFocused = false;
 
-    private final int clickTimeout = 50; // Задержка удаления символов при удержании клавиши "Стереть"
     private final Handler handler = new Handler();
+    private final int deleteTimeout; // Задержка удаления символов при удержании клавиши "Стереть"
 
-
-    private Keyboard(Context context, WindowManager windowManager, KeyListener callback, ViewGroup viewGroup) {
+    private Keyboard(Context context, WindowManager windowManager, KeyListener callback, ViewGroup viewGroup, int deleteTimeout) {
         super(context);
         this.callback = callback;
         this.viewGroup = viewGroup;
         this.windowManager = windowManager;
         this.context = context;
+        this.deleteTimeout = deleteTimeout;
     }
 
     public void showKeyboard() {
@@ -350,14 +352,18 @@ public class Keyboard extends LinearLayout {
         return button;
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     private void setupButton(ImageButton button, int type) {
         switch (type) {
             case CLEAR_BUTTON:
                 button.setOnClickListener(click -> callback.onDeleteButtonClicked()); // стереть 1 символ
+                button.setOnLongClickListener(v -> {
+                    handler.postDelayed(longClickAction, deleteTimeout);
+                    return false;
+                });
                 button.setOnTouchListener((v, event) -> {
-                    if (event.getAction() == MotionEvent.ACTION_DOWN) {
-                        handler.postDelayed(longClickAction, clickTimeout);
-                    } else if (event.getAction() == MotionEvent.ACTION_UP) {
+                    Log.e("earlyrain", "event: " + event);
+                    if (event.getAction() == MotionEvent.ACTION_UP) {
                         handler.removeCallbacks(longClickAction);
                     }
                     return false;
@@ -503,7 +509,7 @@ public class Keyboard extends LinearLayout {
         public void run() {
             if (callback != null) {
                 callback.onDeleteButtonClicked();
-                handler.postDelayed(longClickAction, clickTimeout);
+                handler.postDelayed(longClickAction, deleteTimeout);
             }
         }
     };
@@ -517,6 +523,7 @@ public class Keyboard extends LinearLayout {
 
         private boolean nightMode = false;
         private boolean numberLine = false;
+        private int clickTimeout = 50; // default
 
         public Builder(@NonNull Activity activity, @NonNull KeyListener callback, @NonNull FrameLayout frameLayout) {
             this.context = activity.getApplicationContext();
@@ -535,8 +542,13 @@ public class Keyboard extends LinearLayout {
             return this;
         }
 
+        public Builder setClickTimeout(int clickTimeout) {
+            this.clickTimeout = clickTimeout;
+            return this;
+        }
+
         public Keyboard build() {
-            Keyboard keyboard = new Keyboard(context, windowManager, callback, viewGroup);
+            Keyboard keyboard = new Keyboard(context, windowManager, callback, viewGroup, clickTimeout);
             keyboard.setNightMode(nightMode);
             keyboard.setNumberLine(numberLine);
             return keyboard;

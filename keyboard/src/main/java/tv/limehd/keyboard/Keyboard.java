@@ -4,10 +4,12 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.os.Handler;
 import android.view.Display;
 import android.view.Gravity;
 import android.view.KeyEvent;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -70,6 +72,10 @@ public class Keyboard extends LinearLayout {
 
     private boolean keyboardActive = false;
     private boolean isLanguageButtonFocused = false;
+
+    private final int clickTimeout = 50; // Задержка удаления символов при удержании клавиши "Стереть"
+    private final Handler handler = new Handler();
+
 
     private Keyboard(Context context, WindowManager windowManager, KeyListener callback, ViewGroup viewGroup) {
         super(context);
@@ -347,13 +353,19 @@ public class Keyboard extends LinearLayout {
     private void setupButton(ImageButton button, int type) {
         switch (type) {
             case CLEAR_BUTTON:
-                button.setOnClickListener(click -> {
-                    callback.onDeleteButtonClicked();
-                }); // Стереть 1 символ
-                button.setOnLongClickListener(click -> {
-                    callback.onLongDeleteButtonClicked();
+                button.setOnClickListener(click -> callback.onDeleteButtonClicked()); // стереть 1 символ
+                button.setOnTouchListener((v, event) -> {
+                    if (event.getAction() == MotionEvent.ACTION_DOWN) {
+                        handler.postDelayed(longClickAction, clickTimeout);
+                    } else if (event.getAction() == MotionEvent.ACTION_UP) {
+                        handler.removeCallbacks(longClickAction);
+                    }
                     return false;
                 });
+                /*button.setOnLongClickListener(click -> {
+                    callback.onLongDeleteButtonClicked();
+                    return false;
+                });*/
             break;
             case HIDE_BUTTON:
                 updateButtonTheme(button);
@@ -485,6 +497,16 @@ public class Keyboard extends LinearLayout {
             }
         }
     }
+
+    private final Runnable longClickAction = new Runnable() {
+        @Override
+        public void run() {
+            if (callback != null) {
+                callback.onDeleteButtonClicked();
+                handler.postDelayed(longClickAction, clickTimeout);
+            }
+        }
+    };
 
     public static class Builder {
 

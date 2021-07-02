@@ -5,4 +5,5 @@
     android:layout_height="32dp"
     android:background="@drawable/button_style"
     android:layout_margin="2dp"
-    android:src="@drawable/ic_hide"/>
+    android:src="@drawable/ic_hide"
+    style="?android:attr/buttonStyle"/>
